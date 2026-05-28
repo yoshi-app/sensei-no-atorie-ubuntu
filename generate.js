@@ -1,8 +1,5 @@
 const Redis  = require('ioredis');
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-const { Pool } = require('pg');
-const pool = new Pool({ connectionString:
-process.env.DATABASE_URL });
+const redis = new Redis();
 
 const RATE_LIMIT = 5;
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -51,17 +48,6 @@ module.exports = async function handler(req, res) {
     });
 
     const data = await geminiRes.json();
-    // RDSに保存
-    try {
-      await pool.query(
-        'INSERT INTO generations (ip, prompt, result, created_at)  VALUES ($1, $2, $3, NOW())',
-        [ip, prompt, JSON.stringify(data)]
-      );
-     } catch (dbErr) {
-       console.error('DB error:', dbErr);
-       // DB障害時もレスポンスは返す
-     }
-
     return res.status(geminiRes.status).json(data);
 
   } catch (err) {
